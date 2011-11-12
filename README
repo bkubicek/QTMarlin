@@ -1,7 +1,12 @@
 This will soon be a QT tool for the marlin firmware.
+
 indended features:
  Temp monitoring+PID adjustments,
  find accurate accelerations/velocities
  eeprom values managing
  configuration.h and pins.h creation.
 
+requires: qt 4, qwt v5, qserialdevice 
+currently tested in linux
+to build, you have to adopt the qtmarlin.pro to have the correct dependency paths.
+then qmake-qt4 or just qmake in case there is no qt3 installed.
