@@ -119,6 +119,15 @@ TabPID::TabPID(QWidget* parent): QWidget(parent)
   h2layout->addWidget(new QLabel("Period:"));
   h2layout->addWidget(lPeriod=new QLabel("0"));
   h2layout->addWidget(new QLabel(" sec"));
+  
+  h2layout->addWidget(new QLabel("Amplitude:"));
+  h2layout->addWidget(lAmp=new QLabel("0"));
+  h2layout->addWidget(new QLabel("last Amplitude:"));
+  h2layout->addWidget(lAmpPrevious=new QLabel("0"));
+  
+  h2layout->addWidget(new QLabel("ratio:"));
+  h2layout->addWidget(lAmpRatio=new QLabel("0"));
+  
   layout->addLayout(h2layout);
   setLayout(layout);
   
@@ -137,7 +146,11 @@ void TabPID::addData(float t1, float b, float t2, float h)
   QTime now=QTime::currentTime();
   float dt=starttime.msecsTo(now);
   time.push_back(dt);
-  value_hotend1.push_back(t1);
+  if((fabs(t1-value_hotend1.last())<50)||(value_hotend1.size()<10))
+    value_hotend1.push_back(t1);
+  else
+    value_hotend1.push_back(value_hotend1.last());  //emergency measure, not sure why this is needed.
+    
   value_bed.push_back(b);
   value_hotend2.push_back(t2);
   value_heater.push_back(h/255.);
@@ -180,6 +193,7 @@ void TabPID::calculatePeriodicity()
   if(value_hotend1.size()<5)
     return;
   float t=value_hotend1.last();
+  int period=0;
   int previouslast=value_hotend1.size()-1;
   bool firsteventfound=false;
   for(int i=value_hotend1.size()-2;i>0;i--)
@@ -190,8 +204,10 @@ void TabPID::calculatePeriodicity()
      {
        if(firsteventfound)
        {
-         lPeriod->setText(QString("%1").arg(value_hotend1.size()-i));
-         return;
+         
+         period=value_hotend1.size()-i;
+         lPeriod->setText(QString("%1").arg(period));
+         break;
        }
        else
        {
@@ -207,6 +223,30 @@ void TabPID::calculatePeriodicity()
      }
     }
   }
+  
+  float minnow=100000,maxnow=0;
+  float minlast=100000,maxlast=0;
+  for(int i=value_hotend1.size()-2;i>value_hotend1.size()-period;i--)
+  {
+    double &f=value_hotend1[i];
+    if(f<minnow) minnow=f;
+    if(f>maxnow) maxnow=f;
+  }
+  lAmp->setText(QString("%1").arg(maxnow-minnow));
+  
+  if(value_hotend1.size()-2*period)
+  {
+    //float minnow=100000,maxnow=0;
+    //float minlast=100000,maxlast=0;
+    for(int i=value_hotend1.size()-period;i>value_hotend1.size()-2*period;i--)
+    {
+      double &f=value_hotend1[i];
+      if(f<minlast) minlast=f;
+      if(f>maxlast) maxlast=f;
+    }
+    lAmpPrevious->setText(QString("%1").arg(maxlast-minlast));
+  }
+  lAmpRatio->setText(QString("%1").arg(lAmp->text().toFloat()/lAmpPrevious->text().toFloat()));
 }
 
 void TabPID::startTime()

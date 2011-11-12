@@ -44,7 +44,7 @@ public:
  QTime starttime;
  QCheckBox *differential;
  QPushButton *btClear, *btPeriod, *btSet,*btLoad;
- QLabel *lPeriod;
+ QLabel *lPeriod,*lAmp,*lAmpPrevious,*lAmpRatio;
  QLineEdit *ePeriod,*eCriticalGain;
  QCheckBox *cbZieglerDif;
  

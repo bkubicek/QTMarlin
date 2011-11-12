@@ -212,7 +212,7 @@ void MainWindow::clickedRefresh()
 // 
 //   }
 //   cout<<ss.str()<<endl;
-#define OSX_WORKAROUND  
+//#define OSX_WORKAROUND  
 #ifndef OSX_WORKAROUND  
   this->m_sde = SerialDeviceEnumerator::instance();
   //connect(this->m_sde, SIGNAL(hasChanged(QStringList)),  this, SLOT(slotPrintAllDevices(QStringList)));
@@ -246,10 +246,10 @@ void MainWindow::clickedRefresh()
   }
 #else
   QDir mydir("/dev/");
-  QStringList list = mydir.entryList();     
+  QStringList list = mydir.entryList(QDir::System);     
   foreach (QString s, list) {
       if(s.startsWith("tty."))
-      portSelector->addItem(s);
+      portSelector->addItem(QString("/dev/%1").arg(s));
   }
   
 #endif
@@ -264,6 +264,7 @@ void MainWindow::slotRead()
   tabRaw->edit->insertPlainText(ba);
   serialBuffer=serialBuffer+QString(ba);
   int n=serialBuffer.lastIndexOf("\n");
+  if(n==-1) return; //not even a full line
   QStringList lines = serialBuffer.mid(0,n).split("\n");
   serialBuffer=serialBuffer.mid(n,sizeof(serialBuffer)-n);
   foreach(QString s, lines)
