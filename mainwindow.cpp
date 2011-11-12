@@ -37,6 +37,7 @@ using namespace std;
 #include <QComboBox>
 #include <QTextEdit>
 #include <QLineEdit>
+#include <QDir>
 
 #include "tab_pid.h"
 #include "tab_raw.h"
@@ -211,38 +212,47 @@ void MainWindow::clickedRefresh()
 // 
 //   }
 //   cout<<ss.str()<<endl;
-  
-  
-      this->m_sde = SerialDeviceEnumerator::instance();
-    //connect(this->m_sde, SIGNAL(hasChanged(QStringList)),  this, SLOT(slotPrintAllDevices(QStringList)));
-    //this->slotPrintAllDevices();
-    QStringList list;
-    list=this->m_sde->devicesAvailable();
-    qDebug() << "\n ===> All devices: " << list;
-    portSelector->clear();
-    foreach (QString s, list) {
-        this->m_sde->setDeviceName(s);
-        qDebug() << "\n <<< info about: " << this->m_sde->name() << " >>>";
-        qDebug() << "-> description  : " << this->m_sde->description();
-        qDebug() << "-> driver       : " << this->m_sde->driver();
-        qDebug() << "-> friendlyName : " << this->m_sde->friendlyName();
-        qDebug() << "-> hardwareID   : " << this->m_sde->hardwareID();
-        qDebug() << "-> locationInfo : " << this->m_sde->locationInfo();
-        qDebug() << "-> manufacturer : " << this->m_sde->manufacturer();
-        qDebug() << "-> productID    : " << this->m_sde->productID();
-        qDebug() << "-> service      : " << this->m_sde->service();
-        qDebug() << "-> shortName    : " << this->m_sde->shortName();
-        qDebug() << "-> subSystem    : " << this->m_sde->subSystem();
-        qDebug() << "-> systemPath   : " << this->m_sde->systemPath();
-        qDebug() << "-> vendorID     : " << this->m_sde->vendorID();
+#define OSX_WORKAROUND  
+#ifndef OSX_WORKAROUND  
+  this->m_sde = SerialDeviceEnumerator::instance();
+  //connect(this->m_sde, SIGNAL(hasChanged(QStringList)),  this, SLOT(slotPrintAllDevices(QStringList)));
+  //this->slotPrintAllDevices();
+  QStringList list;
+  list=this->m_sde->devicesAvailable();
+  qDebug() << "\n ===> All devices: " << list;
+  portSelector->clear();
+  foreach (QString s, list) {
+      this->m_sde->setDeviceName(s);
+      qDebug() << "\n <<< info about: " << this->m_sde->name() << " >>>";
+      qDebug() << "-> description  : " << this->m_sde->description();
+      qDebug() << "-> driver       : " << this->m_sde->driver();
+      qDebug() << "-> friendlyName : " << this->m_sde->friendlyName();
+      qDebug() << "-> hardwareID   : " << this->m_sde->hardwareID();
+      qDebug() << "-> locationInfo : " << this->m_sde->locationInfo();
+      qDebug() << "-> manufacturer : " << this->m_sde->manufacturer();
+      qDebug() << "-> productID    : " << this->m_sde->productID();
+      qDebug() << "-> service      : " << this->m_sde->service();
+      qDebug() << "-> shortName    : " << this->m_sde->shortName();
+      qDebug() << "-> subSystem    : " << this->m_sde->subSystem();
+      qDebug() << "-> systemPath   : " << this->m_sde->systemPath();
+      qDebug() << "-> vendorID     : " << this->m_sde->vendorID();
 
-        qDebug() << "-> revision     : " << this->m_sde->revision();
-        qDebug() << "-> bus          : " << this->m_sde->bus();
-        //
-        qDebug() << "-> is exists    : " << this->m_sde->isExists();
-        qDebug() << "-> is busy      : " << this->m_sde->isBusy();
-        portSelector->addItem(this->m_sde->shortName());
-    }
+      qDebug() << "-> revision     : " << this->m_sde->revision();
+      qDebug() << "-> bus          : " << this->m_sde->bus();
+      //
+      qDebug() << "-> is exists    : " << this->m_sde->isExists();
+      qDebug() << "-> is busy      : " << this->m_sde->isBusy();
+      portSelector->addItem(this->m_sde->shortName());
+  }
+#else
+  QDir mydir("/dev/");
+  QStringList list = mydir.entryList();     
+  foreach (QString s, list) {
+      if(s.startsWith("tty."))
+      portSelector->addItem(s);
+  }
+  
+#endif
 }
 
 
