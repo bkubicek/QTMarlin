@@ -61,7 +61,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent)
   baudSelector->addItem("115200");
   baudSelector->addItem("57600");
   baudSelector->addItem("230400");
-  baudSelector->addItem("250000 not working due to the library");
+  baudSelector->addItem("250000");
   btConnect= new QPushButton("Connect");;
   btDisconnect=new QPushButton("Disconnect",this);
   btRescan= new QPushButton("Rescan",this);
@@ -169,6 +169,14 @@ void MainWindow::clickedConnect()
           return ;
       };
     }
+    if(baud=="250000")
+    {
+       if (!port->setBaudRate(AbstractSerial::BaudRate250000)) 
+       {
+          qDebug() << "Set baud rate " <<  AbstractSerial::BaudRate250000 << " error.";
+          return ;
+      };
+    }
     if(baud=="57600")
     {
        if (!port->setBaudRate(AbstractSerial::BaudRate57600)) 
@@ -255,7 +263,21 @@ void MainWindow::clickedRefresh()
 #endif
 }
 
-
+void getdata(const QString &line,const QString &after, const QString &key,float &target)
+{
+   int n=line.indexOf(after);
+   if(n==-1) return;
+  QString t=line.mid(n,line.size());
+  int m=t.indexOf(key)+key.size();
+  if(m==-1)
+    return;
+  float f;
+  QString end=t.mid(m, t.size()).split(" ")[0];
+  f=end.toFloat();
+  target=f;
+  
+  qDebug()<<end<<endl;
+}
 void MainWindow::slotRead() 
 {
   QByteArray ba = port->readAll();
@@ -302,6 +324,45 @@ void MainWindow::slotRead()
      tabPID->addData(variables["T"],variables["B"],0,variables["@"]);
      
    }
+   else if(s.startsWith("echo:"))
+   {
+     
+      float f;
+      getdata(s,"M92","X",tabEEPROM->stepsperunit[0]);
+      getdata(s,"M92","Y",tabEEPROM->stepsperunit[1]);
+      getdata(s,"M92","Z",tabEEPROM->stepsperunit[2]);
+      getdata(s,"M92","E",tabEEPROM->stepsperunit[3]);
+      
+      getdata(s,"M203","X",tabEEPROM->vmax[0]);
+      getdata(s,"M203","Y",tabEEPROM->vmax[1]);
+      getdata(s,"M203","Z",tabEEPROM->vmax[2]);
+      getdata(s,"M203","E",tabEEPROM->vmax[3]);
+      
+      getdata(s,"M201","X",tabEEPROM->amax[0]);
+      getdata(s,"M201","Y",tabEEPROM->amax[1]);
+      getdata(s,"M201","Z",tabEEPROM->amax[2]);
+      getdata(s,"M201","E",tabEEPROM->amax[3]);
+      
+      getdata(s,"M204","S",tabEEPROM->acceleration);
+      getdata(s,"M204","T",tabEEPROM->accelerationRetract);
+      
+      getdata(s,"M205","S",tabEEPROM->vmin);
+      getdata(s,"M205","T",tabEEPROM->vmin_travel);
+      getdata(s,"M205","B",tabEEPROM->tmin_segment);
+      getdata(s,"M205","X",tabEEPROM->vxyjerk);
+      getdata(s,"M205","Z",tabEEPROM->vzjerk);
+      
+      qDebug()<<f<<endl;
+     /*
+      * float stepsperunit[4];
+  float vmax[4];
+  float amax[4];
+  float acceleration, accelerationRetract;
+  float vxyjerk,vzjerk;
+  float vmin,vmin_travel;
+  float tmin_segment;*/
+   }
+   
   }
 }
 

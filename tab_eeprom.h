@@ -21,7 +21,14 @@ public:
   TabEEPROM(QWidget *parent = 0);
 
 
-
+  float stepsperunit[4];
+  float vmax[4];
+  float amax[4];
+  float acceleration, accelerationRetract;
+  float vxyjerk,vzjerk;
+  float vmin,vmin_travel;
+  float tmin_segment;
+  
 
 
 public slots:
