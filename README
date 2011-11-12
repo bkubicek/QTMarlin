@@ -1,0 +1,7 @@
+This will soon be a QT tool for the marlin firmware.
+indended features:
+ Temp monitoring+PID adjustments,
+ find accurate accelerations/velocities
+ eeprom values managing
+ configuration.h and pins.h creation.
+
