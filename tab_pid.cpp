@@ -226,6 +226,7 @@ void TabPID::clearClicked()
   target_hotend1.resize(0);
   target_hotend2.resize(0);
   target_bed.resize(0);
+  startTime();
   
 }
 

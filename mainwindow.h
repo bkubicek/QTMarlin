@@ -21,6 +21,7 @@ class TabEEPROM;
 //class QextSerialPort;
 class SerialDeviceEnumerator;
 class AbstractSerial;
+class QTimer;
 
 #include <QMap>
 
@@ -69,6 +70,9 @@ private:
   //QextSerialPort *comport;
   SerialDeviceEnumerator *m_sde;
   AbstractSerial *port;
+  
+  QString serialBuffer; //so only full lines are handed to the next stuff.
+  QTimer *timer; 
   
 };
 

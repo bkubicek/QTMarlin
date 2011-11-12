@@ -95,7 +95,18 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent)
   
   connect(port, SIGNAL(readyRead()), this, SLOT(slotRead()));
   connect(tabRaw->sendText,SIGNAL(returnPressed()),this, SLOT(manualSend()));
-
+  
+  
+   connect(tabPID,SIGNAL(pidChanged()),this, SLOT(sendPID()));
+  connect(tabPID->pids[0],SIGNAL(returnPressed()),this, SLOT(sendPID()));
+  connect(tabPID->pids[1],SIGNAL(returnPressed()),this, SLOT(sendPID()));
+  connect(tabPID->pids[2],SIGNAL(returnPressed()),this, SLOT(sendPID()));
+  connect(tabPID->pids[3],SIGNAL(returnPressed()),this, SLOT(sendPID()));
+  connect(tabPID->btLoad,SIGNAL(clicked()),this, SLOT(getPID()));
+  
+  connect(tabPID->temp[hotend1],SIGNAL(returnPressed()),this, SLOT(setHotend1Temp()));
+  
+  timer = new QTimer(this);
 }
 MainWindow::~MainWindow()
 {
@@ -167,19 +178,13 @@ void MainWindow::clickedConnect()
     }
   tabPID->startTime();
   
-  connect(tabPID->temp[hotend1],SIGNAL(returnPressed()),this, SLOT(setHotend1Temp()));
-  QTimer *timer = new QTimer(this);
+  
   connect(timer, SIGNAL(timeout()), this, SLOT(measure()));
   timer->start(1000);
   send("M301\n");
   
-  connect(tabPID,SIGNAL(pidChanged()),this, SLOT(sendPID()));
-  connect(tabPID->pids[0],SIGNAL(returnPressed()),this, SLOT(sendPID()));
-  connect(tabPID->pids[1],SIGNAL(returnPressed()),this, SLOT(sendPID()));
-  connect(tabPID->pids[2],SIGNAL(returnPressed()),this, SLOT(sendPID()));
-  connect(tabPID->pids[3],SIGNAL(returnPressed()),this, SLOT(sendPID()));
-  connect(tabPID->btLoad,SIGNAL(clicked()),this, SLOT(getPID()));
-
+ 
+  serialBuffer="";
 }
 
 void MainWindow::clickedDisconnect()
@@ -247,8 +252,10 @@ void MainWindow::slotRead()
   //qDebug() << "Readed is : " << ba.size() << " bytes";
   //qDebug()<<QString( ba);
   tabRaw->edit->insertPlainText(ba);
-  
-  QStringList lines = QString( ba).split("\n");
+  serialBuffer=serialBuffer+QString(ba);
+  int n=serialBuffer.lastIndexOf("\n");
+  QStringList lines = serialBuffer.mid(0,n).split("\n");
+  serialBuffer=serialBuffer.mid(n,sizeof(serialBuffer)-n);
   foreach(QString s, lines)
   {
    if(s.startsWith("ok"))
