@@ -47,6 +47,9 @@ public slots:
   void manualSend();
   void measure();
   void setHotend1Temp();
+  
+  void sendPID();
+  void getPID();
   //void quit();
   
 

@@ -87,12 +87,24 @@ TabPID::TabPID(QWidget* parent): QWidget(parent)
   gb2g->addWidget(pids[2]=new QLineEdit("0"),2,1);
   gb2g->addWidget(new QLabel("Extruder speed prop:"),3,0);
   gb2g->addWidget(pids[3]=new QLineEdit("0"),3,1);
+  gb2g->addWidget(btLoad=new QPushButton("Load"),4,0);
   gb2->setLayout(gb2g);
 //   pids[0]->setMaxLength(3);
 //   pids[1]->setMaxLength(3);
 //   pids[2]->setMaxLength(3);
 //   pids[3]->setMaxLength(3);
   
+  QGridLayout *gb3g=new QGridLayout;
+    
+  gb3g->addWidget(new QLabel("Critical prop. Gain:"),0,0);
+  gb3g->addWidget(eCriticalGain=new QLineEdit("0"),0,1);
+  gb3g->addWidget(btPeriod=new QPushButton("Period [sec]@critical:"),1,0);
+  gb3g->addWidget(ePeriod=new QLineEdit("0"),1,1);
+  gb3g->addWidget(cbZieglerDif=new QCheckBox("PI+D?"),2,0);
+  //gb3g->addWidget(pids[2]=new QLineEdit("0"),2,1);
+  gb3g->addWidget(btSet=new QPushButton("Set",this),3,0);
+  //gb3g->addWidget(pids[3]=new QLineEdit("0"),3,1);
+  gb3->setLayout(gb3g);
   
   h1layout->addWidget(gb1);
   h1layout->addWidget(gb2);
@@ -111,7 +123,11 @@ TabPID::TabPID(QWidget* parent): QWidget(parent)
   setLayout(layout);
   
   
-
+  connect(btClear,SIGNAL(clicked(bool)),this,SLOT(clearClicked()));
+  connect(btPeriod,SIGNAL(clicked(bool)),this,SLOT(periodClicked()));
+  connect(btSet,SIGNAL(clicked(bool)),this,SLOT(setClicked()));
+  connect(btLoad,SIGNAL(clicked(bool)),this,SLOT(loadClicked()));
+  
   
 }
 
@@ -198,3 +214,45 @@ void TabPID::startTime()
   starttime= QTime::currentTime();
 }
 
+
+void TabPID::clearClicked()
+{
+  time.resize(0);
+  value_hotend1.resize(0);
+  value_bed.resize(0);
+  value_hotend2.resize(0);
+  value_heater.resize(0);
+  
+  target_hotend1.resize(0);
+  target_hotend2.resize(0);
+  target_bed.resize(0);
+  
+}
+
+void TabPID::periodClicked()
+{
+  ePeriod->setText(lPeriod->text());
+}
+
+void TabPID::setClicked()
+{
+  float ku=eCriticalGain->text().toFloat();
+  float t=ePeriod->text().toFloat();
+  float kp=0,ki=0,kd=0;
+  if(cbZieglerDif->isChecked())
+  { //PID
+    kp=0.6*ku;
+    ki=2.*kp/t;
+    kd=kp*t/8.;
+  }
+  else //PI only
+  {
+    kp=ku/2.2;
+    ki=1.2*kp/t;
+    kd=0;
+  }
+  pids[0]->setText(QString("%1").arg(kp));
+  pids[1]->setText(QString("%1").arg(ki));
+  pids[2]->setText(QString("%1").arg(kd));
+  emit pidChanged();
+}

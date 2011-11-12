@@ -43,14 +43,19 @@ public:
  QVector<double> target_hotend1,target_hotend2,target_bed;
  QTime starttime;
  QCheckBox *differential;
- QPushButton *btClear;
+ QPushButton *btClear, *btPeriod, *btSet,*btLoad;
  QLabel *lPeriod;
+ QLineEdit *ePeriod,*eCriticalGain;
+ QCheckBox *cbZieglerDif;
  
 public slots:
   //void setWasRead();
   //void quit();
-
-
+  void clearClicked();
+  void periodClicked();
+  void setClicked();
+signals:
+  void pidChanged();
 private: 
   QPushButton *test;
 };

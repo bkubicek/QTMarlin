@@ -171,6 +171,14 @@ void MainWindow::clickedConnect()
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(measure()));
   timer->start(1000);
+  send("M301\n");
+  
+  connect(tabPID,SIGNAL(pidChanged()),this, SLOT(sendPID()));
+  connect(tabPID->pids[0],SIGNAL(returnPressed()),this, SLOT(sendPID()));
+  connect(tabPID->pids[1],SIGNAL(returnPressed()),this, SLOT(sendPID()));
+  connect(tabPID->pids[2],SIGNAL(returnPressed()),this, SLOT(sendPID()));
+  connect(tabPID->pids[3],SIGNAL(returnPressed()),this, SLOT(sendPID()));
+  connect(tabPID->btLoad,SIGNAL(clicked()),this, SLOT(getPID()));
 
 }
 
@@ -308,4 +316,14 @@ void MainWindow::measure()
 void MainWindow::setHotend1Temp()
 {
   send(QString("M104 S%1\n").arg(tabPID->temp[hotend1]->text()));
+}
+
+void MainWindow::sendPID()
+{
+  send(QString("M301 P%1 I%2 D%3 C%4\n").arg(tabPID->pids[0]->text()).arg(tabPID->pids[1]->text()).arg(tabPID->pids[2]->text()).arg(tabPID->pids[3]->text()));
+}
+
+void MainWindow::getPID()
+{
+  send(QString("M301\n"));
 }
