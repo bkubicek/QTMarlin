@@ -18,7 +18,7 @@
 using namespace std;
 
 
-
+#include <QTimer>
 
 #include <QFont>
 #include <QPushButton>
@@ -59,8 +59,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent)
   
   baudSelector->addItem("115200");
   baudSelector->addItem("57600");
-  baudSelector->addItem("230800");
-  baudSelector->addItem("250000");
+  baudSelector->addItem("230400");
+  baudSelector->addItem("250000 not working due to the library");
   btConnect= new QPushButton("Connect");;
   btDisconnect=new QPushButton("Disconnect",this);
   btRescan= new QPushButton("Rescan",this);
@@ -96,6 +96,10 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent)
   connect(port, SIGNAL(readyRead()), this, SLOT(slotRead()));
   connect(tabRaw->sendText,SIGNAL(returnPressed()),this, SLOT(manualSend()));
 
+}
+MainWindow::~MainWindow()
+{
+    port->close();
 }
 
 void MainWindow::clickedConnect()
@@ -145,6 +149,28 @@ void MainWindow::clickedConnect()
           return ;
       };
     }
+    if(baud=="230400")
+    {
+       if (!port->setBaudRate(AbstractSerial::BaudRate230400)) 
+       {
+          qDebug() << "Set baud rate " <<  AbstractSerial::BaudRate230400 << " error.";
+          return ;
+      };
+    }
+    if(baud=="57600")
+    {
+       if (!port->setBaudRate(AbstractSerial::BaudRate57600)) 
+       {
+          qDebug() << "Set baud rate " <<  AbstractSerial::BaudRate57600<< " error.";
+          return ;
+      };
+    }
+  tabPID->startTime();
+  
+  connect(tabPID->temp[hotend1],SIGNAL(returnPressed()),this, SLOT(setHotend1Temp()));
+  QTimer *timer = new QTimer(this);
+  connect(timer, SIGNAL(timeout()), this, SLOT(measure()));
+  timer->start(1000);
 
 }
 
@@ -210,9 +236,9 @@ void MainWindow::clickedRefresh()
 void MainWindow::slotRead() 
 {
   QByteArray ba = port->readAll();
-  qDebug() << "Readed is : " << ba.size() << " bytes";
+  //qDebug() << "Readed is : " << ba.size() << " bytes";
   //qDebug()<<QString( ba);
-  tabRaw->edit->append(ba);
+  tabRaw->edit->insertPlainText(ba);
   
   QStringList lines = QString( ba).split("\n");
   foreach(QString s, lines)
@@ -222,15 +248,32 @@ void MainWindow::slotRead()
      QStringList junks(s.remove(0,3).split(" ",QString::SkipEmptyParts));
      foreach(QString j, junks)
      {
-       qDebug()<<j<<endl;
+       //qDebug()<<j<<endl;
        QStringList ll=j.split(":",QString::SkipEmptyParts);
        if(ll.size()==2)
        {
         variables[ll[0]]= ll[1].toDouble();
-        qDebug()<<"Variable read:"<<QString(ll[0])<<"="<<variables[ll[0]]<<endl;
+       // qDebug()<<"Variable read:"<<QString(ll[0])<<"="<<variables[ll[0]]<<endl;
+        if(ll[0]=="p")
+        {
+         tabPID->pids[0]->setText(ll[1]); 
+        }
+        if(ll[0]=="i")
+        {
+         tabPID->pids[1]->setText(ll[1]); 
+        }
+        if(ll[0]=="d")
+        {
+         tabPID->pids[2]->setText(ll[1]); 
+        }
+        if(ll[0]=="c")
+        {
+         tabPID->pids[3]->setText(ll[1]); 
+        }
+        
        }
      }
-     
+     tabPID->addData(variables["T"],variables["B"],0,variables["@"]);
      
    }
   }
@@ -253,6 +296,16 @@ void MainWindow::send(const QString &text)
   */
   
   bw = port->write(ba);
-  qDebug() << "Writen : " << bw << " bytes:"<<QString(ba);
+  //qDebug() << "Writen : " << bw << " bytes:"<<QString(ba);
 
+}
+
+void MainWindow::measure()
+{
+  send("M105\n");
+}
+
+void MainWindow::setHotend1Temp()
+{
+  send(QString("M104 S%1\n").arg(tabPID->temp[hotend1]->text()));
 }

@@ -31,7 +31,7 @@ Q_OBJECT
 
 public:
   MainWindow(QWidget *parent = 0);
-
+  ~MainWindow();
 
 
   void send(const QString &text);
@@ -45,6 +45,8 @@ public slots:
   void clickedRefresh();
   void slotRead();
   void manualSend();
+  void measure();
+  void setHotend1Temp();
   //void quit();
   
 
