@@ -44,7 +44,7 @@ TabPID::TabPID(QWidget* parent): QWidget(parent)
   curve[heater] = new QwtPlotCurve("Heater");
   for(int i=0;i<4;i++)
   {
-    curve[i]->setData(x,y,2);
+    curve[i]->setSamples(x,y,2);
     curve[i]->setPen(QPen(QColor::fromHsv((255*i)/10,255,255),2));
 
   }
@@ -172,17 +172,17 @@ void TabPID::addData(float t1, float b, float t2, float h)
       d[1][i]=value_bed[i]-target_bed[i];
       d[2][i]=value_hotend2[i]-target_hotend2[i];
     }
-    curve[hotend1]->setData(time,d[0]);
-    curve[hotend2]->setData(time,d[2]);
-    curve[bed]->setData(time,d[1]);
+    curve[hotend1]->setSamples(time,d[0]);
+    curve[hotend2]->setSamples(time,d[2]);
+    curve[bed]->setSamples(time,d[1]);
   }
   else
   {
-    curve[hotend1]->setData(time,value_hotend1);
-    curve[hotend2]->setData(time,value_hotend2);
-    curve[bed]->setData(time,value_bed);
+    curve[hotend1]->setSamples(time,value_hotend1);
+    curve[hotend2]->setSamples(time,value_hotend2);
+    curve[bed]->setSamples(time,value_bed);
   }
-  curve[heater]->setData(time,value_heater);
+  curve[heater]->setSamples(time,value_heater);
   tempPlot->replot();
   heaterPlot->replot();
   calculatePeriodicity();
