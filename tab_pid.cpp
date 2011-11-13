@@ -135,7 +135,7 @@ TabPID::TabPID(QWidget* parent): QWidget(parent)
   connect(btClear,SIGNAL(clicked(bool)),this,SLOT(clearClicked()));
   connect(btPeriod,SIGNAL(clicked(bool)),this,SLOT(periodClicked()));
   connect(btSet,SIGNAL(clicked(bool)),this,SLOT(setClicked()));
-  connect(btLoad,SIGNAL(clicked(bool)),this,SLOT(loadClicked()));
+  //connect(btLoad,SIGNAL(clicked(bool)),this,SLOT(loadClicked()));
   
   
 }

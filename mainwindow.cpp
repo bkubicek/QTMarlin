@@ -42,16 +42,16 @@ using namespace std;
 #include "tab_pid.h"
 #include "tab_raw.h"
 #include "tab_eeprom.h"
-//#include "qextserialenumerator.h"
-//#include "qextserialport.h"
 
-#include "serialdeviceenumerator.h"
-#include <abstractserial.h>
+#ifdef USE_QSERIALDEVICE
+  #include <serialdeviceenumerator.h>
+#endif
 
 MainWindow::MainWindow(QWidget *parent): QWidget(parent)
-{
-  //comport = new QextSerialPort( QextSerialPort::Polling);  
-  port = new AbstractSerial();
+{      
+  initSerial();
+  
+  //port = new AbstractSerial();
   QVBoxLayout *layout = new QVBoxLayout;
   
   QHBoxLayout *comLayout= new QHBoxLayout;
@@ -94,7 +94,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent)
   connect(btDisconnect, SIGNAL(clicked(bool)), this, SLOT(clickedDisconnect()));
   connect(btRescan, SIGNAL(clicked(bool)), this, SLOT(clickedRefresh()));
   
-  connect(port, SIGNAL(readyRead()), this, SLOT(slotRead()));
+  //connect(comport, SIGNAL(readyRead()), this, SLOT(slotRead()));
   connect(tabRaw->sendText,SIGNAL(returnPressed()),this, SLOT(manualSend()));
   
   
@@ -109,39 +109,65 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent)
   
   timer = new QTimer(this);
 }
+
 MainWindow::~MainWindow()
 {
-    port->close();
+  closeSerial();
 }
 
-void MainWindow::clickedConnect()
+void MainWindow::initSerial()
 {
-//  if(!(bool)comport)
-//    delete comport;
-//   
-//   comport=new QextSerialPort(portSelector->currentText(), QextSerialPort::Polling);
-//   QString baud=baudSelector->currentText();
-//   if(baud=="57600")
-//     comport->setBaudRate(BAUD57600);
-//   else if(baud=="115200")
-//     comport->setBaudRate(BAUD115200);
-//   else 
-//     cerr<<"Unsuppored baudrate"<<endl;
-//  
-// 
-//   comport->setFlowControl(FLOW_OFF);
-//   //comport->setParity(PAR_ODD);
-//   comport->setParity(PAR_NONE);
-//   comport->setDataBits(DATA_8);
-//   comport->setStopBits(STOP_1);
-//   if (comport->open(QIODevice::ReadWrite) != true) {
-//         cout<<"failed opening comport:"<<portSelector->currentText().toStdString()<<endl;
-//         exit(1);
-//   }
-//   
-   
-    port->setDeviceName(portSelector->currentText());
-    if (port->open(AbstractSerial::ReadWrite | AbstractSerial::Unbuffered)) 
+  #ifdef USE_QEXTSERIALPORT
+    comport=0;
+  #endif
+
+  #ifdef USE_QSERIALDEVICE
+    comport = new AbstractSerial();
+    connect(comport, SIGNAL(readyRead()), this, SLOT(slotRead()));
+  #endif
+}
+
+void MainWindow::closeSerial()
+{
+  
+  #ifdef USE_QEXTSERIALPORT
+    comport->close();
+    delete comport;
+    comport=0;
+  #endif
+
+  #ifdef USE_QSERIALDEVICE
+    comport->close();
+  #endif
+}
+
+void MainWindow::openSerial()
+{
+  #ifdef USE_QEXTSERIALPORT
+    if(comport)
+      closeSerial();
+  
+    comport = new QextSerialPort(portSelector->currentText(), QextSerialPort::EventDriven);  
+    connect(comport, SIGNAL(readyRead()), this, SLOT(slotRead()));
+
+    QString baud=baudSelector->currentText();
+    if(baud=="57600")
+      comport->setBaudRate(BAUD57600);
+    else if(baud=="115200")
+      comport->setBaudRate(BAUD115200);
+    else 
+      cerr<<"Unsuppored baudrate"<<endl;
+
+    if (comport->open(QIODevice::ReadWrite) != true) 
+    {
+      cout<<"failed opening comport:"<<portSelector->currentText().toStdString()<<endl;
+      exit(1);
+    }
+  #endif
+
+  #ifdef USE_QSERIALDEVICE
+    comport->setDeviceName(portSelector->currentText());
+    if (comport->open(AbstractSerial::ReadWrite | AbstractSerial::Unbuffered)) 
     {
        qDebug()<<"opened ok"<<endl;
     }
@@ -155,7 +181,7 @@ void MainWindow::clickedConnect()
     QString baud=baudSelector->currentText();
     if(baud=="115200")
     {
-       if (!port->setBaudRate(AbstractSerial::BaudRate115200)) 
+       if (!comport->setBaudRate(AbstractSerial::BaudRate115200)) 
        {
           qDebug() << "Set baud rate " <<  AbstractSerial::BaudRate115200 << " error.";
           return ;
@@ -163,7 +189,7 @@ void MainWindow::clickedConnect()
     }
     if(baud=="230400")
     {
-       if (!port->setBaudRate(AbstractSerial::BaudRate230400)) 
+       if (!comport->setBaudRate(AbstractSerial::BaudRate230400)) 
        {
           qDebug() << "Set baud rate " <<  AbstractSerial::BaudRate230400 << " error.";
           return ;
@@ -171,7 +197,7 @@ void MainWindow::clickedConnect()
     }
     if(baud=="250000")
     {
-       if (!port->setBaudRate(AbstractSerial::BaudRate250000)) 
+       if (!comport->setBaudRate(AbstractSerial::BaudRate250000)) 
        {
           qDebug() << "Set baud rate " <<  AbstractSerial::BaudRate250000 << " error.";
           return ;
@@ -179,88 +205,75 @@ void MainWindow::clickedConnect()
     }
     if(baud=="57600")
     {
-       if (!port->setBaudRate(AbstractSerial::BaudRate57600)) 
+       if (!comport->setBaudRate(AbstractSerial::BaudRate57600)) 
        {
           qDebug() << "Set baud rate " <<  AbstractSerial::BaudRate57600<< " error.";
           return ;
       };
     }
+  #endif
+}
+
+
+
+void MainWindow::clickedConnect()
+{
+  openSerial();
+ 
   tabPID->startTime();
-  
   
   connect(timer, SIGNAL(timeout()), this, SLOT(measure()));
   timer->start(1000);
   send("M301\n");
-  
- 
   serialBuffer="";
 }
 
 void MainWindow::clickedDisconnect()
 {
   //comport->close();
-  port->close();
+  //disconnect(comport, SIGNAL(readyRead()), this, SLOT(slotRead()));
+  closeSerial();
 }
 
 void MainWindow::clickedRefresh()
 {
-//   portSelector->clear();
-//   QList<QextPortInfo> ports = QextSerialEnumerator::getPorts();
-//   stringstream ss;
-//   for (int i = 0; i < ports.size(); i++) {
-//       ss<< "port name:\"" << ports.at(i).portName.toStdString()<<"\""<<endl;
-//       ss<< "friendly name:" << ports.at(i).friendName.toStdString()<<endl;
-//       ss<< "physical name:" << ports.at(i).physName.toStdString()<<endl;
-//       ss<< "enumerator name:" << ports.at(i).enumName.toStdString()<<endl;
-//       //qDebug() << "vendor ID:" << QString::number(ports.at(i).vendorID, 16);
-//       //qDebug() << "product ID:" << QString::number(ports.at(i).productID, 16);
-//       ss<< "==================================="<<endl;
-//       
-//       portSelector->addItem( ports.at(i).physName);
-// 
-//   }
-//   cout<<ss.str()<<endl;
-//#define OSX_WORKAROUND  
-#ifndef OSX_WORKAROUND  
-  this->m_sde = SerialDeviceEnumerator::instance();
-  //connect(this->m_sde, SIGNAL(hasChanged(QStringList)),  this, SLOT(slotPrintAllDevices(QStringList)));
-  //this->slotPrintAllDevices();
-  QStringList list;
-  list=this->m_sde->devicesAvailable();
-  qDebug() << "\n ===> All devices: " << list;
-  portSelector->clear();
-  foreach (QString s, list) {
-      this->m_sde->setDeviceName(s);
-      qDebug() << "\n <<< info about: " << this->m_sde->name() << " >>>";
-      qDebug() << "-> description  : " << this->m_sde->description();
-      qDebug() << "-> driver       : " << this->m_sde->driver();
-      qDebug() << "-> friendlyName : " << this->m_sde->friendlyName();
-      qDebug() << "-> hardwareID   : " << this->m_sde->hardwareID();
-      qDebug() << "-> locationInfo : " << this->m_sde->locationInfo();
-      qDebug() << "-> manufacturer : " << this->m_sde->manufacturer();
-      qDebug() << "-> productID    : " << this->m_sde->productID();
-      qDebug() << "-> service      : " << this->m_sde->service();
-      qDebug() << "-> shortName    : " << this->m_sde->shortName();
-      qDebug() << "-> subSystem    : " << this->m_sde->subSystem();
-      qDebug() << "-> systemPath   : " << this->m_sde->systemPath();
-      qDebug() << "-> vendorID     : " << this->m_sde->vendorID();
+  QStringList portnames;
+  #ifdef USE_QEXTSERIALPORT
+    QList<QextPortInfo> ports = QextSerialEnumerator::getPorts();
+    stringstream ss;
+    for (int i = 0; i < ports.size(); i++) 
+      portnames<<(ports.at(i).physName);
+  #endif
 
-      qDebug() << "-> revision     : " << this->m_sde->revision();
-      qDebug() << "-> bus          : " << this->m_sde->bus();
-      //
-      qDebug() << "-> is exists    : " << this->m_sde->isExists();
-      qDebug() << "-> is busy      : " << this->m_sde->isBusy();
-      portSelector->addItem(this->m_sde->shortName());
-  }
-#else
-  QDir mydir("/dev/");
-  QStringList list = mydir.entryList(QDir::System);     
-  foreach (QString s, list) {
-      if(s.startsWith("tty."))
-      portSelector->addItem(QString("/dev/%1").arg(s));
-  }
+  #ifdef USE_QSERIALDEVICE
+      
+    #ifdef DONTUSE_QSERIALDEVICEENUMERATE
+      QDir mydir("/dev");
+      QStringList list = mydir.entryList(QDir::AllEntries|QDir::System);     
+      foreach (QString s, list) 
+      {
+        if(s.startsWith("tty"))
+          portnames<<QString("/dev/%1").arg(s));
+      }
+    #else
+      SerialDeviceEnumerator *m_sde = SerialDeviceEnumerator::instance();
   
-#endif
+      QStringList list;
+      list=m_sde->devicesAvailable();
+      
+      foreach (QString s, list) 
+      {
+        m_sde->setDeviceName(s);
+        portnames<<m_sde->shortName();
+      }
+          
+    #endif
+  #endif
+  
+  //always:
+  portSelector->clear();
+  foreach (QString s, portnames) 
+    portSelector->addItem(s);
 }
 
 void getdata(const QString &line,const QString &after, const QString &key,float &target)
@@ -280,7 +293,7 @@ void getdata(const QString &line,const QString &after, const QString &key,float 
 }
 void MainWindow::slotRead() 
 {
-  QByteArray ba = port->readAll();
+  QByteArray ba = comport->readAll();
   //qDebug() << "Readed is : " << ba.size() << " bytes";
   //qDebug()<<QString( ba);
   tabRaw->edit->insertPlainText(ba);
@@ -374,7 +387,7 @@ void MainWindow::manualSend()
 
 void MainWindow::send(const QString &text)
 {
-  if(!port->isOpen())
+  if(!comport->isOpen())
     return;
   QByteArray ba=text.toAscii(); //data to send
   qint64 bw = 0; //bytes really writed
@@ -382,7 +395,7 @@ void MainWindow::send(const QString &text)
   /* 5. Fifth - you can now read / write device, or further modify its settings, etc.
   */
   
-  bw = port->write(ba);
+  bw = comport->write(ba);
   //qDebug() << "Writen : " << bw << " bytes:"<<QString(ba);
 
 }

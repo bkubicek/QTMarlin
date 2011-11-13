@@ -3,7 +3,12 @@
 
 #include <stdint.h>
 #include <QList>
-#include <abstractserial.h>
+
+
+
+
+
+
 class MyThread;
 class QwtPlotCurve;
 class QwtPlot;
@@ -25,6 +30,25 @@ class QTimer;
 
 #include <QMap>
 
+//user choices:
+//#define USE_QEXTSERIALPORT  //if comment QSerialDevice will be used
+//#define DONTUSE_QSERIALDEVICEENUMERATE  //OSX fix for QSerialDevice
+
+#ifndef USE_QEXTSERIALPORT
+  #define USE_QSERIALDEVICE
+#endif
+
+
+
+
+#ifdef USE_QEXTSERIALPORT
+  #include "qextserialport.h"
+  #include <qextserialenumerator.h>
+#endif
+
+#ifdef USE_QSERIALDEVICE
+  #include <abstractserial.h>
+#endif
 
 class MainWindow : public QWidget
 {
@@ -67,12 +91,19 @@ private:
   QPushButton *btDisconnect;
   QPushButton *btRescan;
   
-  //QextSerialPort *comport;
-  SerialDeviceEnumerator *m_sde;
-  AbstractSerial *port;
-  
+  #ifdef USE_QEXTSERIALPORT
+    QextSerialPort *comport;
+  #endif
+
+  #ifdef USE_QSERIALDEVICE  
+    AbstractSerial *comport;
+  #endif
   QString serialBuffer; //so only full lines are handed to the next stuff.
   QTimer *timer; 
-  
+
+private: //functions
+  void initSerial();
+  void openSerial();
+  void closeSerial();
 };
 

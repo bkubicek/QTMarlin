@@ -3,8 +3,10 @@
 ######################################################################
 
 QWT_DIR=/home/bkubicek/software/qwt-6.0.1/
-QEXTSERIAL_DIR=/home/bkubicek/PVModulMesser/qextserialport
+QEXTSERIAL_DIR=/home/bkubicek/git/qextserialport
 QSERIALDEVICE_DIR=/home/bkubicek/software/qserialdevice-qserialdevice/
+
+
 TEMPLATE = app
 TARGET = 
 DEPENDPATH += .
@@ -22,10 +24,11 @@ QMAKE_LIBDIR += $$QSERIALDEVICE_DIR/src/build/release
 HEADERS += mainwindow.h tab_pid.h tab_raw.h tab_eeprom.h
 SOURCES += main.cpp mainwindow.cpp tab_pid.cpp  tab_raw.cpp tab_eeprom.cpp
 #LIBS  += -lqextserialport -lqserialdevice -lqwt
-LIBS  += -lqserialdevice -lqwt
+LIBS += -lqwt
+LIBS += libqextserialport.a
+LIBS += -lqserialdevice 
 
 
-#CONFIG+=static
 
 win32 {
     LIBS += -lsetupapi -luuid -ladvapi32
