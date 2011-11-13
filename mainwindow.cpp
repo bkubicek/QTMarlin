@@ -42,6 +42,7 @@ using namespace std;
 #include "tab_pid.h"
 #include "tab_raw.h"
 #include "tab_eeprom.h"
+#include "tab_veltest.h"
 
 #ifdef USE_QSERIALDEVICE
   #include <serialdeviceenumerator.h>
@@ -52,6 +53,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent)
   initSerial();
   
   //port = new AbstractSerial();
+  readSinceLastSend="";
+  wait_reply=false;
   QVBoxLayout *layout = new QVBoxLayout;
   
   QHBoxLayout *comLayout= new QHBoxLayout;
@@ -77,10 +80,12 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent)
   tabPID=new TabPID(tab);
   tabRaw=new TabRaw(tab);
   tabEEPROM=new TabEEPROM(tab);
+  tabVeltest=new TabVeltest(this,0);
   
   tab->addTab(tabRaw,"Raw");
   tab->addTab(tabPID,"PID");
   tab->addTab(tabEEPROM,"EEPROM");
+  tab->addTab(tabVeltest,"VelTest");
   
   status=new QStatusBar(this);
  
@@ -107,7 +112,9 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent)
   
   connect(tabPID->temp[hotend1],SIGNAL(returnPressed()),this, SLOT(setHotend1Temp()));
   
+  connect(this,SIGNAL(newSerialData()),this,SLOT(processReply()));
   timer = new QTimer(this);
+  connect(timer,SIGNAL(timeout()),tabVeltest,SLOT(checkDone()));
 }
 
 MainWindow::~MainWindow()
@@ -289,7 +296,7 @@ void getdata(const QString &line,const QString &after, const QString &key,float 
   f=end.toFloat();
   target=f;
   
-  qDebug()<<end<<endl;
+  //qDebug()<<end<<endl;
 }
 void MainWindow::slotRead() 
 {
@@ -298,12 +305,15 @@ void MainWindow::slotRead()
   //qDebug()<<QString( ba);
   tabRaw->edit->insertPlainText(ba);
   serialBuffer=serialBuffer+QString(ba);
+  readSinceLastSend.append(QString(ba));
   int n=serialBuffer.lastIndexOf("\n");
   if(n==-1) return; //not even a full line
-  QStringList lines = serialBuffer.mid(0,n).split("\n");
+  QStringList lines = serialBuffer.mid(0,n).split("\n",QString::SkipEmptyParts);
   serialBuffer=serialBuffer.mid(n,sizeof(serialBuffer)-n);
   foreach(QString s, lines)
   {
+   if(s.contains("endstop"))
+     endstopfound=true;
    if(s.startsWith("ok"))
    {
      QStringList junks(s.remove(0,3).split(" ",QString::SkipEmptyParts));
@@ -313,7 +323,10 @@ void MainWindow::slotRead()
        QStringList ll=j.split(":",QString::SkipEmptyParts);
        if(ll.size()==2)
        {
-        variables[ll[0]]= ll[1].toDouble();
+         bool ok=false;
+         float f=ll[1].toDouble(&ok);
+         if(ok)
+            variables[ll[0]]=f ;
        // qDebug()<<"Variable read:"<<QString(ll[0])<<"="<<variables[ll[0]]<<endl;
         if(ll[0]=="p")
         {
@@ -340,7 +353,7 @@ void MainWindow::slotRead()
    else if(s.startsWith("echo:"))
    {
      
-      float f;
+ 
       getdata(s,"M92","X",tabEEPROM->stepsperunit[0]);
       getdata(s,"M92","Y",tabEEPROM->stepsperunit[1]);
       getdata(s,"M92","Z",tabEEPROM->stepsperunit[2]);
@@ -365,7 +378,7 @@ void MainWindow::slotRead()
       getdata(s,"M205","X",tabEEPROM->vxyjerk);
       getdata(s,"M205","Z",tabEEPROM->vzjerk);
       
-      qDebug()<<f<<endl;
+      //qDebug()<<f<<endl;
      /*
       * float stepsperunit[4];
   float vmax[4];
@@ -377,6 +390,7 @@ void MainWindow::slotRead()
    }
    
   }
+  emit newSerialData();
 }
 
 void MainWindow::manualSend()
@@ -385,37 +399,94 @@ void MainWindow::manualSend()
 }
 
 
-void MainWindow::send(const QString &text)
+void MainWindow::send(QString text)
 {
   if(!comport->isOpen())
     return;
-  QByteArray ba=text.toAscii(); //data to send
+  QString text2=text.append("\n");
+  QByteArray ba=text2.toAscii(); //data to send
   qint64 bw = 0; //bytes really writed
 
-  /* 5. Fifth - you can now read / write device, or further modify its settings, etc.
-  */
-  
   bw = comport->write(ba);
-  //qDebug() << "Writen : " << bw << " bytes:"<<QString(ba);
 
+}
+
+void MainWindow::sendGcode(const QString &text)
+{
+  sendcodes<<text;
+  if(wait_reply)
+    return;
+  
+  send(sendcodes[0]);
+  readSinceLastSend="";
+  wait_reply=true;
+}
+
+void MainWindow::processReply()
+{
+  if(sendcodes.size()==0)
+    return;
+  
+  QStringList lines = readSinceLastSend.split("\n",QString::SkipEmptyParts);
+  qDebug()<<"got reply for command "<<sendcodes[0];
+  
+  QString overhang="";
+  foreach(QString s,lines)
+  {
+    if(overhang.size())
+    {
+      overhang.append(s);
+      //qDebug()<<"Appeneded Overhang:"<<overhang<<endl;
+    }
+    else
+      overhang=s;
+    
+    if(overhang.startsWith("ok"))
+    {
+       qDebug()<<"ack ok:"<<overhang<<endl;
+      if(sendcodes.size())
+      {
+        sendcodes.removeFirst();
+        if(sendcodes.size())
+        {
+          readSinceLastSend="";
+          send(sendcodes[0]);
+        }
+        else
+            wait_reply=false;
+      }
+      
+    }
+    else
+    {
+     // qDebug()<<"ack not ok:"<<overhang<<endl;
+    }
+    if(s.size()<2)
+      overhang=s;
+    else
+      overhang="";
+    //qDebug()<<"Overhang:"<<overhang<<endl;
+  }
+  
 }
 
 void MainWindow::measure()
 {
-  send("M105\n");
+  if(tabPID->monitor->isChecked())
+    sendGcode("M105");
 }
 
 void MainWindow::setHotend1Temp()
 {
-  send(QString("M104 S%1\n").arg(tabPID->temp[hotend1]->text()));
+  sendGcode(QString("M104 S%1").arg(tabPID->temp[hotend1]->text()));
 }
 
 void MainWindow::sendPID()
 {
-  send(QString("M301 P%1 I%2 D%3 C%4\n").arg(tabPID->pids[0]->text()).arg(tabPID->pids[1]->text()).arg(tabPID->pids[2]->text()).arg(tabPID->pids[3]->text()));
+  sendGcode(QString("M301 P%1 I%2 D%3 C%4").arg(tabPID->pids[0]->text()).arg(tabPID->pids[1]->text()).arg(tabPID->pids[2]->text()).arg(tabPID->pids[3]->text()));
 }
 
 void MainWindow::getPID()
 {
-  send(QString("M301\n"));
+  sendGcode(QString("M301"));
 }

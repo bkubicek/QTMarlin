@@ -112,6 +112,8 @@ TabPID::TabPID(QWidget* parent): QWidget(parent)
   layout->addLayout(h1layout);
   
   QHBoxLayout *h2layout = new QHBoxLayout;
+  monitor=new QCheckBox("monitor temp",this);
+  h2layout->addWidget(monitor);
   differential=new QCheckBox("differential",this);
   h2layout->addWidget(differential);
   btClear=new QPushButton("Clear");
@@ -145,12 +147,17 @@ void TabPID::addData(float t1, float b, float t2, float h)
 {
   QTime now=QTime::currentTime();
   float dt=starttime.msecsTo(now);
-  time.push_back(dt);
-  if((fabs(t1-value_hotend1.last())<50)||(value_hotend1.size()<10))
+  
+  if((fabs(t1-value_hotend1.last())<50)||(value_hotend1.size()<5))
     value_hotend1.push_back(t1);
   else
-    value_hotend1.push_back(value_hotend1.last());  //emergency measure, not sure why this is needed.
-    
+  {
+    if(value_hotend1.size()<5)
+      return;
+    else
+      value_hotend1.push_back(value_hotend1.last());  //emergency measure, not sure why this is needed.
+  } 
+  time.push_back(dt);
   value_bed.push_back(b);
   value_hotend2.push_back(t2);
   value_heater.push_back(h/255.);

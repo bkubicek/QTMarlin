@@ -21,8 +21,8 @@ QMAKE_LIBDOR += $$QEXTSERIAL_DIR/src/build/
 QMAKE_LIBDIR += $$QSERIALDEVICE_DIR/src/build/release
 
 # Input
-HEADERS += mainwindow.h tab_pid.h tab_raw.h tab_eeprom.h
-SOURCES += main.cpp mainwindow.cpp tab_pid.cpp  tab_raw.cpp tab_eeprom.cpp
+HEADERS += mainwindow.h tab_pid.h tab_raw.h tab_eeprom.h tab_veltest.h
+SOURCES += main.cpp mainwindow.cpp tab_pid.cpp  tab_raw.cpp tab_eeprom.cpp tab_veltest.cpp
 #LIBS  += -lqextserialport -lqserialdevice -lqwt
 LIBS += -lqwt
 LIBS += libqextserialport.a

@@ -1,3 +1,5 @@
+#ifndef __MAINWINDOWH
+#define __MAINWINDOWH
 #include <QWidget>
 #include <fstream>
 
@@ -23,6 +25,7 @@ class QPushButton;
 class TabPID;
 class TabRaw;
 class TabEEPROM;
+class TabVeltest;
 //class QextSerialPort;
 class SerialDeviceEnumerator;
 class AbstractSerial;
@@ -59,10 +62,14 @@ public:
   ~MainWindow();
 
 
-  void send(const QString &text);
+  void send(QString text);
+  void sendGcode(const QString &text); //wait for "ok"
 
-  
+  QStringList sendcodes;
   QMap<QString, float> variables;
+  
+  bool wait_reply;
+  bool endstopfound;
   
 public slots:
   void clickedConnect();
@@ -77,6 +84,9 @@ public slots:
   void getPID();
   //void quit();
   
+  void processReply();
+signals:
+  void newSerialData();
 
 private: 
   QStatusBar *status;
@@ -84,6 +94,7 @@ private:
   TabPID *tabPID;
   TabRaw *tabRaw;
   TabEEPROM *tabEEPROM;
+  TabVeltest *tabVeltest;
   
   QComboBox *portSelector;
   QComboBox *baudSelector;
@@ -105,5 +116,8 @@ private: //functions
   void initSerial();
   void openSerial();
   void closeSerial();
+  
+  QString readSinceLastSend;
 };
 
+#endif

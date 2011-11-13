@@ -42,7 +42,7 @@ public:
  QVector<double> value_hotend1,value_hotend2,value_bed,value_heater;
  QVector<double> target_hotend1,target_hotend2,target_bed;
  QTime starttime;
- QCheckBox *differential;
+ QCheckBox *differential,*monitor;
  QPushButton *btClear, *btPeriod, *btSet,*btLoad;
  QLabel *lPeriod,*lAmp,*lAmpPrevious,*lAmpRatio;
  QLineEdit *ePeriod,*eCriticalGain;
