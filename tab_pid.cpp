@@ -28,13 +28,15 @@ TabPID::TabPID(QWidget* parent): QWidget(parent)
   //myPlot->setAxisTitle(QwtPlot::xBottom,"");
   tempPlot->setAxisTitle(QwtPlot::yLeft,"Celsius");
   heaterPlot= new QwtPlot(this);
-  heaterPlot->setAxisTitle(QwtPlot::yLeft,"Heating Powert");
+  heaterPlot->setAxisTitle(QwtPlot::yLeft,"Heating Power");
   QwtPlotGrid *myGrid=new QwtPlotGrid();
   myGrid->attach(tempPlot);
   QwtPlotGrid *myhGrid=new QwtPlotGrid();
   myhGrid->attach(heaterPlot);
   tempPlot->insertLegend(new QwtLegend());
   heaterPlot->insertLegend(new QwtLegend());
+  tempPlot->setMaximumHeight(150);
+  heaterPlot->setMaximumHeight(150);
   double x[2]={0,0};
   double y[2]={0,0};
   
@@ -114,17 +116,16 @@ TabPID::TabPID(QWidget* parent): QWidget(parent)
   QHBoxLayout *h2layout = new QHBoxLayout;
   monitor=new QCheckBox("monitor temp",this);
   h2layout->addWidget(monitor);
-  differential=new QCheckBox("differential",this);
+  differential=new QCheckBox("Offset Temperature",this);
   h2layout->addWidget(differential);
   btClear=new QPushButton("Clear");
   h2layout->addWidget(btClear);
-  h2layout->addWidget(new QLabel("Period:"));
+  h2layout->addWidget(new QLabel("Period [sec]:"));
   h2layout->addWidget(lPeriod=new QLabel("0"));
-  h2layout->addWidget(new QLabel(" sec"));
   
-  h2layout->addWidget(new QLabel("Amplitude:"));
+  h2layout->addWidget(new QLabel("Amplitude [C]:"));
   h2layout->addWidget(lAmp=new QLabel("0"));
-  h2layout->addWidget(new QLabel("last Amplitude:"));
+  h2layout->addWidget(new QLabel("last Amplitude [C]:"));
   h2layout->addWidget(lAmpPrevious=new QLabel("0"));
   
   h2layout->addWidget(new QLabel("ratio:"));
@@ -148,15 +149,7 @@ void TabPID::addData(float t1, float b, float t2, float h)
   QTime now=QTime::currentTime();
   float dt=starttime.msecsTo(now);
   
-  if((fabs(t1-value_hotend1.last())<50)||(value_hotend1.size()<5))
-    value_hotend1.push_back(t1);
-  else
-  {
-    if(value_hotend1.size()<5)
-      return;
-    else
-      value_hotend1.push_back(value_hotend1.last());  //emergency measure, not sure why this is needed.
-  } 
+  value_hotend1.push_back(t1); 
   time.push_back(dt);
   value_bed.push_back(b);
   value_hotend2.push_back(t2);

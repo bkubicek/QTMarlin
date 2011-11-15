@@ -53,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent)
   initSerial();
   
   //port = new AbstractSerial();
-  readSinceLastSend="";
+  serialBinBuffer.resize(0);
   wait_reply=false;
   QVBoxLayout *layout = new QVBoxLayout;
   
@@ -115,6 +115,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent)
   connect(this,SIGNAL(newSerialData()),this,SLOT(processReply()));
   timer = new QTimer(this);
   connect(timer,SIGNAL(timeout()),tabVeltest,SLOT(checkDone()));
+  pidloaded=false;
 }
 
 MainWindow::~MainWindow()
@@ -231,7 +232,7 @@ void MainWindow::clickedConnect()
   
   connect(timer, SIGNAL(timeout()), this, SLOT(measure()));
   timer->start(1000);
-  send("M301\n");
+  //getPID();
   serialBuffer="";
 }
 
@@ -260,7 +261,7 @@ void MainWindow::clickedRefresh()
       foreach (QString s, list) 
       {
         if(s.startsWith("tty"))
-          portnames<<QString("/dev/%1").arg(s));
+          portnames<<QString("/dev/%1").arg(s);
       }
     #else
       SerialDeviceEnumerator *m_sde = SerialDeviceEnumerator::instance();
@@ -301,20 +302,23 @@ void getdata(const QString &line,const QString &after, const QString &key,float 
 void MainWindow::slotRead() 
 {
   QByteArray ba = comport->readAll();
-  //qDebug() << "Readed is : " << ba.size() << " bytes";
-  //qDebug()<<QString( ba);
-  tabRaw->edit->insertPlainText(ba);
-  serialBuffer=serialBuffer+QString(ba);
-  readSinceLastSend.append(QString(ba));
-  int n=serialBuffer.lastIndexOf("\n");
-  if(n==-1) return; //not even a full line
-  QStringList lines = serialBuffer.mid(0,n).split("\n",QString::SkipEmptyParts);
-  serialBuffer=serialBuffer.mid(n,sizeof(serialBuffer)-n);
-  foreach(QString s, lines)
+  serialBinBuffer.append(ba);
+  int lastnewlinepos=serialBinBuffer.lastIndexOf('\n');
+  qDebug()<<"newline@"<<lastnewlinepos;
+  if(lastnewlinepos<0) 
+    return; //no newline read yet.
+  QString readlines=QString(serialBinBuffer.mid(0,lastnewlinepos).append((char)0));
+  readSinceLastSend.append(readlines);
+  QStringList lines=readlines.split("\n",QString::SkipEmptyParts);
+  serialBinBuffer.remove(0,lastnewlinepos);
+  tabRaw->edit->insertPlainText(readlines);
+  
+  foreach(QString s, lines) //s =  linecontent
   {
+    qDebug()<<"read line:"<<s;
    if(s.contains("endstop"))
      endstopfound=true;
-   if(s.startsWith("ok"))
+   if(s.startsWith("ok") ||s.startsWith("T"))
    {
      QStringList junks(s.remove(0,3).split(" ",QString::SkipEmptyParts));
      foreach(QString j, junks)
@@ -413,6 +417,7 @@ void MainWindow::send(QString text)
 
 void MainWindow::sendGcode(const QString &text)
 {
+  qDebug()<<"gcode cue list:"<<sendcodes.size();
   sendcodes<<text;
   if(wait_reply)
     return;
@@ -472,8 +477,16 @@ void MainWindow::processReply()
 
 void MainWindow::measure()
 {
+  //qDebug()<<"measure"
+  if(!pidloaded)
+  {
+     getPID();
+      pidloaded=true;
+  }
+  else
   if(tabPID->monitor->isChecked())
     sendGcode("M105");
+  
 }
 
 void MainWindow::setHotend1Temp()

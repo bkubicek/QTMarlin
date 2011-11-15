@@ -117,7 +117,9 @@ private: //functions
   void openSerial();
   void closeSerial();
   
+  QByteArray serialBinBuffer;
   QString readSinceLastSend;
+  bool pidloaded;
 };
 
 #endif
