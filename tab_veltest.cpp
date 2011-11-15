@@ -164,9 +164,9 @@ void TabVeltest::startTestCase(TestCase& tc)
   mw->sendGcode(QString("G28 X0 "));
 
 
-  mw->sendGcode(QString("G1 X%0 F%1").arg(x).arg(tc.v*60));
+  mw->sendGcode(QString("G1 X%0 F%1").arg(x).arg(tc.v));
   mw->sendGcode(QString("M400"));
-  mw->sendGcode(QString("G1 X1 F%1").arg(tc.v*30));
+  mw->sendGcode(QString("G1 X1 F%1").arg(tc.v*0.5));
   mw->sendGcode(QString("M400"));
   testing=true;
 }
