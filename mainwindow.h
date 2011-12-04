@@ -21,6 +21,7 @@ class QTreeWidgetItem;
 class QTabWidget;
 class QComboBox;
 class QPushButton;
+class QLineEdit;
 
 class TabPID;
 class TabRaw;
@@ -71,6 +72,7 @@ public:
   bool wait_reply;
   bool endstopfound;
   
+  
 public slots:
   void clickedConnect();
   void clickedDisconnect();
@@ -85,6 +87,14 @@ public slots:
   //void quit();
   
   void processReply();
+  
+  
+  void EEPROM_loadClicked();
+  void EEPROM_writeClicked();
+  void EEPROM_storeClicked();
+  void EEPROM_resetClicked();
+  void EEPROM_factorResetClicked();
+  
 signals:
   void newSerialData();
 
@@ -116,6 +126,9 @@ private: //functions
   void initSerial();
   void openSerial();
   void closeSerial();
+  
+  void getdata(const QString &line,const QString &after, const QString &key,float &target);
+  void getdata(const QString &line,const QString &after, const QString &key,QLineEdit *target);
   
   QByteArray serialBinBuffer;
   QString readSinceLastSend;

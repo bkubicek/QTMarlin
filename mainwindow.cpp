@@ -38,6 +38,7 @@ using namespace std;
 #include <QTextEdit>
 #include <QLineEdit>
 #include <QDir>
+#include <QLabel>
 
 #include "tab_pid.h"
 #include "tab_raw.h"
@@ -116,6 +117,12 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent)
   timer = new QTimer(this);
   connect(timer,SIGNAL(timeout()),tabVeltest,SLOT(checkDone()));
   pidloaded=false;
+  
+  
+  connect(tabEEPROM->pbRead,SIGNAL(clicked(bool)),this, SLOT(EEPROM_loadClicked()));
+  connect(tabEEPROM->pbWrite,SIGNAL(clicked(bool)),this, SLOT(EEPROM_writeClicked()));
+  connect(tabEEPROM->pbReset,SIGNAL(clicked(bool)),this, SLOT(EEPROM_resetClicked()));
+  connect(tabEEPROM->pbFactorReset,SIGNAL(clicked(bool)),this, SLOT(EEPROM_factorResetClicked()));
 }
 
 MainWindow::~MainWindow()
@@ -284,7 +291,7 @@ void MainWindow::clickedRefresh()
     portSelector->addItem(s);
 }
 
-void getdata(const QString &line,const QString &after, const QString &key,float &target)
+void MainWindow::getdata(const QString &line,const QString &after, const QString &key,float &target)
 {
    int n=line.indexOf(after);
    if(n==-1) return;
@@ -297,6 +304,22 @@ void getdata(const QString &line,const QString &after, const QString &key,float 
   f=end.toFloat();
   target=f;
   
+  //qDebug()<<end<<endl;
+}
+
+void MainWindow::getdata(const QString &line,const QString &after, const QString &key,QLineEdit *target)
+{
+   int n=line.indexOf(after);
+   if(n==-1) return;
+  QString t=line.mid(n,line.size());
+  int m=t.indexOf(key)+key.size();
+  if(m==-1)
+    return;
+  float f;
+  QString end=t.mid(m, t.size()).split(" ")[0];
+  f=end.toFloat();
+  target->setText(end);
+  tabEEPROM->EEPROM_recalculate();
   //qDebug()<<end<<endl;
 }
 void MainWindow::slotRead() 
@@ -335,14 +358,17 @@ void MainWindow::slotRead()
         if(ll[0]=="p")
         {
          tabPID->pids[0]->setText(ll[1]); 
+         tabEEPROM->lEPIDp->setText(ll[1]);
         }
         if(ll[0]=="i")
         {
          tabPID->pids[1]->setText(ll[1]); 
+         tabEEPROM->lEPIDi->setText(ll[1]);
         }
         if(ll[0]=="d")
         {
          tabPID->pids[2]->setText(ll[1]); 
+         tabEEPROM->lEPIDd->setText(ll[1]);
         }
         if(ll[0]=="c")
         {
@@ -358,29 +384,33 @@ void MainWindow::slotRead()
    {
      
  
-      getdata(s,"M92","X",tabEEPROM->stepsperunit[0]);
-      getdata(s,"M92","Y",tabEEPROM->stepsperunit[1]);
-      getdata(s,"M92","Z",tabEEPROM->stepsperunit[2]);
-      getdata(s,"M92","E",tabEEPROM->stepsperunit[3]);
+      getdata(s,"M92","X",tabEEPROM->lEstepsperunit[0]);
+      getdata(s,"M92","Y",tabEEPROM->lEstepsperunit[1]);
+      getdata(s,"M92","Z",tabEEPROM->lEstepsperunit[2]);
+      getdata(s,"M92","E",tabEEPROM->lEstepsperunit[3]);
       
-      getdata(s,"M203","X",tabEEPROM->vmax[0]);
-      getdata(s,"M203","Y",tabEEPROM->vmax[1]);
-      getdata(s,"M203","Z",tabEEPROM->vmax[2]);
-      getdata(s,"M203","E",tabEEPROM->vmax[3]);
+      getdata(s,"M203","X",tabEEPROM->lEvmax[0]);
+      getdata(s,"M203","Y",tabEEPROM->lEvmax[1]);
+      getdata(s,"M203","Z",tabEEPROM->lEvmax[2]);
+      getdata(s,"M203","E",tabEEPROM->lEvmax[3]);
       
-      getdata(s,"M201","X",tabEEPROM->amax[0]);
-      getdata(s,"M201","Y",tabEEPROM->amax[1]);
-      getdata(s,"M201","Z",tabEEPROM->amax[2]);
-      getdata(s,"M201","E",tabEEPROM->amax[3]);
+      getdata(s,"M201","X",tabEEPROM->lEamax[0]);
+      getdata(s,"M201","Y",tabEEPROM->lEamax[1]);
+      getdata(s,"M201","Z",tabEEPROM->lEamax[2]);
+      getdata(s,"M201","E",tabEEPROM->lEamax[3]);
       
-      getdata(s,"M204","S",tabEEPROM->acceleration);
-      getdata(s,"M204","T",tabEEPROM->accelerationRetract);
+      getdata(s,"M204","S",tabEEPROM->lEacceleration);
+      getdata(s,"M204","T",tabEEPROM->lEaccelerationRetract);
       
-      getdata(s,"M205","S",tabEEPROM->vmin);
-      getdata(s,"M205","T",tabEEPROM->vmin_travel);
-      getdata(s,"M205","B",tabEEPROM->tmin_segment);
-      getdata(s,"M205","X",tabEEPROM->vxyjerk);
-      getdata(s,"M205","Z",tabEEPROM->vzjerk);
+      getdata(s,"M205","S",tabEEPROM->lEvmin);
+      getdata(s,"M205","T",tabEEPROM->lEvmin_travel);
+      getdata(s,"M205","B",tabEEPROM->lEtmin_segment);
+      getdata(s,"M205","X",tabEEPROM->lEvxyjerk);
+      getdata(s,"M205","Z",tabEEPROM->lEvzjerk);
+      
+      getdata(s,"M301","P",tabEEPROM->lEPIDp);
+      getdata(s,"M301","I",tabEEPROM->lEPIDi);
+      getdata(s,"M301","D",tabEEPROM->lEPIDd);
       
       //qDebug()<<f<<endl;
      /*
@@ -502,4 +532,53 @@ void MainWindow::sendPID()
 void MainWindow::getPID()
 {
   sendGcode(QString("M301"));
+}
+
+
+void MainWindow::EEPROM_loadClicked()
+{
+  //qDebug()<<"Load Clicked";
+  sendGcode(QString("M503"));
+}
+
+
+
+void MainWindow::EEPROM_resetClicked()
+{
+  sendGcode("M501");
+  EEPROM_loadClicked();
+}
+
+
+void MainWindow::EEPROM_factorResetClicked()
+{
+  sendGcode("M502");
+  EEPROM_loadClicked();
+}
+
+void MainWindow::EEPROM_storeClicked()
+{
+
+}
+
+void MainWindow::EEPROM_writeClicked()
+{
+/*
+ * :  M92 X79.87 Y79.87 Z533.00 E953.00
+echo:Maximum feedrates (mm/s):
+echo:  M203 X200.00 Y200.00 Z19.00 E932.00
+echo:Maximum Acceleration (mm/s2):
+echo:  M201 X10300 Y10500 Z500 E4700
+echo:Acceleration: S=acceleration, T=retract acceleration
+echo:  M204 S4700.00 T7000.00
+echo:Advanced variables: S=Min feedrate (mm/s), T=Min travel feedrate (mm/s), B=minimum segment time (ms), X=maximum xY jerk (mm/s),  Z=maximum Z jerk (mm/s)
+echo:  M205 S0.00 T174.00 B20000 X36.00 Z600.00
+echo:PID settings:
+echo:   M301 P24.00 I1.02 D141.00
+*/
+  sendGcode(QString("M92 X%1 Y%2 Z%3 E%4").arg(tabEEPROM->lEstepsperunit[0]->text()).arg(tabEEPROM->lEstepsperunit[1]->text()).arg(tabEEPROM->lEstepsperunit[2]->text()).arg(tabEEPROM->lEstepsperunit[3]->text()) );
+  sendGcode(QString("M203 X%1 Y%2 Z%3 E%4").arg(tabEEPROM->lEvmax[0]->text()).arg(tabEEPROM->lEvmax[1]->text()).arg(tabEEPROM->lEvmax[2]->text()).arg(tabEEPROM->lEvmax[3]->text()) );
+  sendGcode(QString("M201 X%1 Y%2 Z%3 E%4").arg(tabEEPROM->lEamax[0]->text()).arg(tabEEPROM->lEamax[1]->text()).arg(tabEEPROM->lEamax[2]->text()).arg(tabEEPROM->lEamax[3]->text()) );
+  sendGcode(QString("M204 S%1 T%2").arg(tabEEPROM->lEacceleration->text()).arg(tabEEPROM->lEaccelerationRetract->text()));
+  sendGcode(QString("M301 P%1 I%2 D%3").arg(tabEEPROM->lEPIDp->text()).arg(tabEEPROM->lEPIDi->text()).arg(tabEEPROM->lEPIDd->text()));
 }
