@@ -151,22 +151,23 @@ void TabVeltest::starttest(uint8_t axis)
 void TabVeltest::startTestCase(TestCase& tc)
 {
   float t=tc.v/tc.a;
+  
   //float x=tc.a*t*t/2.*2; //10mm + full acceleration distance.
   float x=200;
   
   qDebug()<<"Test:"<<tc.a<<" "<<tc.v<<endl;
   mw->endstopfound=false;
   mw->sendGcode(QString("M205 S0 T0"));
-  mw->sendGcode(QString("M205 S0 T0 X%0 Z%1").arg(tc.xyjerk).arg(tc.zjerk));
-  mw->sendGcode(QString("M202 X%0 Y%1 ").arg(tc.a).arg(tc.a));
+  mw->sendGcode(QString("M205 S0 T0 %0%1 Z%2").arg(AxisChars[tc.axis]).arg(tc.xyjerk).arg(tc.zjerk));
+  mw->sendGcode(QString("M202 %00%1 Y%2 ").arg(AxisChars[tc.axis]).arg(tc.a).arg(tc.a));
   mw->sendGcode(QString("M204 S%0 T%1 ").arg(tc.a).arg(tc.a));
-  mw->sendGcode(QString("M203 X%0 Y%1 ").arg(tc.v).arg(tc.v));
-  mw->sendGcode(QString("G28 X0 "));
+  mw->sendGcode(QString("M203 %00%1 Y%2 ").arg(AxisChars[tc.axis]).arg(tc.v).arg(tc.v));
+  mw->sendGcode(QString("G28 %000 ").arg(AxisChars[tc.axis]));
 
 
-  mw->sendGcode(QString("G1 X%0 F%1").arg(x).arg(tc.v));
+  mw->sendGcode(QString("G1 %00%1 F%2").arg(AxisChars[tc.axis]).arg(x).arg(tc.v*60));
   mw->sendGcode(QString("M400"));
-  mw->sendGcode(QString("G1 X1 F%1").arg(tc.v*0.5));
+  mw->sendGcode(QString("G1 %001 F%1").arg(AxisChars[tc.axis]).arg(tc.v*0.5*60));
   mw->sendGcode(QString("M400"));
   testing=true;
 }

@@ -327,18 +327,19 @@ void MainWindow::slotRead()
   QByteArray ba = comport->readAll();
   serialBinBuffer.append(ba);
   int lastnewlinepos=serialBinBuffer.lastIndexOf('\n');
-  qDebug()<<"newline@"<<lastnewlinepos;
+ // qDebug()<<"newline@"<<lastnewlinepos;
   if(lastnewlinepos<0) 
     return; //no newline read yet.
   QString readlines=QString(serialBinBuffer.mid(0,lastnewlinepos).append((char)0));
   readSinceLastSend.append(readlines);
   QStringList lines=readlines.split("\n",QString::SkipEmptyParts);
   serialBinBuffer.remove(0,lastnewlinepos);
-  tabRaw->edit->insertPlainText(readlines);
+  
+  tabRaw->displayText(readlines);
   
   foreach(QString s, lines) //s =  linecontent
   {
-    qDebug()<<"read line:"<<s;
+    //qDebug()<<"read line:"<<s;
    if(s.contains("endstop"))
      endstopfound=true;
    if(s.startsWith("ok") ||s.startsWith("T"))
@@ -435,6 +436,7 @@ void MainWindow::manualSend()
 
 void MainWindow::send(QString text)
 {
+  tabRaw->displayTextHtml(QString("<br><b><font color=red>Sending:%0</font></b><br>").arg(text));
   if(!comport->isOpen())
     return;
   QString text2=text.append("\n");
@@ -447,7 +449,9 @@ void MainWindow::send(QString text)
 
 void MainWindow::sendGcode(const QString &text)
 {
-  qDebug()<<"gcode cue list:"<<sendcodes.size();
+  //qDebug()<<"gcode cue list:"<<sendcodes.size();
+  
+
   sendcodes<<text;
   if(wait_reply)
     return;
@@ -463,7 +467,7 @@ void MainWindow::processReply()
     return;
   
   QStringList lines = readSinceLastSend.split("\n",QString::SkipEmptyParts);
-  qDebug()<<"got reply for command "<<sendcodes[0];
+  //qDebug()<<"got reply for command "<<sendcodes[0];
   
   QString overhang="";
   foreach(QString s,lines)
@@ -478,7 +482,7 @@ void MainWindow::processReply()
     
     if(overhang.startsWith("ok"))
     {
-       qDebug()<<"ack ok:"<<overhang<<endl;
+       //qDebug()<<"ack ok:"<<overhang<<endl;
       if(sendcodes.size())
       {
         sendcodes.removeFirst();

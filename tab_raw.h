@@ -23,11 +23,13 @@ Q_OBJECT
 
 public:
   TabRaw(QWidget *parent = 0);
-
+  void displayText(const QString &text);
+  void displayTextHtml(const QString& text);
 
   QTextEdit *edit;
   QLineEdit *sendText;
   QPushButton *btClear;
+  
 
 
 public slots:

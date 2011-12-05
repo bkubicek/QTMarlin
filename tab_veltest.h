@@ -20,6 +20,7 @@ class QLabel;
 
 #include "mainwindow.h"
 
+const char AxisChars[]={'X','Y','Z','E'};
 struct TestCase
 {
   uint8_t axis;

@@ -40,3 +40,19 @@ TabRaw::TabRaw(QWidget* parent): QWidget(parent)
   setLayout(layout);
 
 }
+
+void TabRaw::displayText(const QString& text)
+{
+  edit->moveCursor(QTextCursor::End);
+  edit->insertPlainText(text);
+  if(!edit->underMouse())
+    edit->ensureCursorVisible();
+}
+
+void TabRaw::displayTextHtml(const QString& text)
+{
+  edit->moveCursor(QTextCursor::End);
+  edit->insertHtml(text);
+  if(!edit->underMouse())
+    edit->ensureCursorVisible();
+}
