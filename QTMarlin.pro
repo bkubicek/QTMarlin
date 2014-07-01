@@ -36,3 +36,26 @@ win32 {
 unix:!macx {
     LIBS += -ludev
 }
+
+macx {
+QWT_DIR=/usr/local/Cellar/qwt/6.0.1/lib/   #brew install qwt
+
+TEMPLATE = app
+TARGET = 
+DEPENDPATH = .
+INCLUDEPATH = .
+INCLUDEPATH += $$QEXTSERIAL_DIR/src
+INCLUDEPATH += $$QWT_DIR/qwt.framework/Headers/
+INCLUDEPATH += $$QSERIALDEVICE_DIR/src/qserialdeviceenumerator
+INCLUDEPATH += $$QSERIALDEVICE_DIR/src/qserialdevice
+
+QMAKE_LIBDIR = $$QEXTSERIAL_DIR/src/build/
+QMAKE_LIBDIR += $$QSERIALDEVICE_DIR/src/build/release
+
+LIBS = $$QEXTSERIAL_DIR/src/build/libqextserialport.dylib
+LIBS += -lqserialdevice 
+LIBS += -F$$QWT_DIR -framework qwt -framework IOKit -framework Foundation
+
+QMAKE_POST_LINK += QWT_DIR=$$QWT_DIR QEXTSERIAL_DIR=$$QEXTSERIAL_DIR ./postmake_osx.sh
+}
+
