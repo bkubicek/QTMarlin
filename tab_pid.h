@@ -1,62 +1,77 @@
-#include <QWidget>
-#include <fstream>
+#ifndef TAB_PID_H
+#define TAB_PID_H
 
-#include <stdint.h>
-#include <QList>
+#include <QWidget>
 #include <QTime>
 #include <QVector>
 
-class MyThread;
-class QwtPlotCurve;
-class QwtPlot;
-class QStatusBar;
 class QCheckBox;
-class QTreeWidget;
-class QTreeWidgetItem;
-class QTabWidget;
 class QPushButton;
 class QLineEdit;
 class QLabel;
+class QwtPlotCurve;
+class QwtPlot;
 
-enum Curves {hotend1=0,bed=1,hotend2=2,heater=3};
+enum Curves {
+    hotend1 = 0,
+    bed = 1,
+    hotend2 = 2,
+    heater = 3
+};
 
 class TabPID : public QWidget
 {
-Q_OBJECT
+    Q_OBJECT
 
 public:
-  TabPID(QWidget *parent = 0);
-  void addData(float t1,float b,float t2,float h);
-  void startTime();
-  void calculatePeriodicity();
+    TabPID(QWidget *parent = 0);
+    void addData(double t1, double b, double t2, double h);
+    void startTime();
+    void calculatePeriodicity();
 
+    QPushButton *clear;
+    QLineEdit *temp[3];
+    QLineEdit *pids[4];
 
- QwtPlotCurve *curve[4] ;
- QwtPlot *tempPlot,*heaterPlot;
- 
- QPushButton *clear;
- QLineEdit *temp[3];
- QLineEdit *pids[4];
- 
- QVector<double> time;
- QVector<double> value_hotend1,value_hotend2,value_bed,value_heater;
- QVector<double> target_hotend1,target_hotend2,target_bed;
- QTime starttime;
- QCheckBox *differential,*monitor;
- QPushButton *btClear, *btPeriod, *btSet,*btLoad;
- QLabel *lPeriod,*lAmp,*lAmpPrevious,*lAmpRatio;
- QLineEdit *ePeriod,*eCriticalGain;
- QCheckBox *cbZieglerDif;
- 
+    QPushButton *btClear;
+    QPushButton *btPeriod;
+    QPushButton *btSet;
+    QPushButton *btLoad;
+
+    QCheckBox *monitor;
+
 public slots:
-  //void setWasRead();
-  //void quit();
-  void clearClicked();
-  void periodClicked();
-  void setClicked();
+    void clearClicked();
+    void periodClicked();
+    void setClicked();
+
+private:
+    QwtPlotCurve *curve[4];
+    QwtPlot *tempPlot;
+    QwtPlot *heaterPlot;
+
+    QLabel *lPeriod;
+    QLabel *lAmp;
+    QLabel *lAmpPrevious;
+    QLabel *lAmpRatio;
+    QLineEdit *ePeriod;
+    QLineEdit *eCriticalGain;
+
+    QCheckBox *differential;
+    QCheckBox *cbZieglerDif;
+
+    QVector<double> time;
+    QVector<double> valueHotEnd1;
+    QVector<double> valueHotEnd2;
+    QVector<double> valueBed;
+    QVector<double> valueHeater;
+    QVector<double> targetHotEnd1;
+    QVector<double> targetHotEnd2;
+    QVector<double> targetBed;
+    QTime currentTime;
+
 signals:
-  void pidChanged();
-private: 
-  QPushButton *test;
+    void pidChanged();
 };
 
+#endif

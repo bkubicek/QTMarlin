@@ -1,12 +1,35 @@
 This will soon be a QT tool for the marlin firmware.
 
-indended features:
+intended features:
  Temp monitoring+PID adjustments,
  find accurate accelerations/velocities
  eeprom values managing
  configuration.h and pins.h creation.
 
-requires: qt 4, qwt v5, qserialdevice 
-currently tested in linux
-to build, you have to adopt the qtmarlin.pro to have the correct dependency paths.
-then qmake-qt4 or just qmake in case there is no qt3 installed.
+external requirements:
+-QT5
+-QWT v6 (see below how to install)
+
+
+To build, you have to adopt the qtmarlin.pro to have the correct dependency path for QWT.
+then qmake or simply run it in QtCreator
+
+
+
+
+Install QWT on macOS:
+
+-Download the .tar.bz2 from here http://sourceforge.net/projects/qwt/files/qwt/6.1.0/
+-Extract it where you want, for Example inside your Download-Folder
+-Then change into the directory qwt-6.1.0
+-Then you have to locate the qmake command line tool ( you can do so by simply searchng for it inside the Finder.
+-Then qmake the qwt.pro File like /Applications/QT/5.1.0/clang_64/bin/qmake qwt.pro
+-make
+-sudo make install
+-Inside your QT Project you have to add the following line to the .pro File include ( /usr/local/qwt-6.1.0/features/qwt.prf ) includes QWT libary into Project
+-Now you have to create a softlink like this : sudo ln -s /usr/local/qwt-6.1.0/lib/qwt.framework/qwt /usr/lib/qwt
+Thats it. QWT now should work.
+
+UNDER MAVERICKS or later the last step does not work, do the following instead:
+
+If you are using Mavericks you have to manually copy the qwt.framework to Libary/Frameworks folder for not getting the "dyld: Library not loaded: libqwt.6.dylib" error 
