@@ -1,69 +1,64 @@
+#ifndef TAB_VELTEST_H
+#define TAB_VELTEST_H
+
 #include <QWidget>
-#include <fstream>
-
-#include <stdint.h>
 #include <QList>
-#include <QTime>
 #include <QVector>
+#include "mainwindow.h"
 
-class MyThread;
-class QwtPlotCurve;
-class QwtPlot;
-class QStatusBar;
-class QCheckBox;
-class QTreeWidget;
-class QTreeWidgetItem;
-class QTabWidget;
 class QPushButton;
 class QLineEdit;
 class QLabel;
+class QwtPlotCurve;
+class QwtPlot;
 
-#include "mainwindow.h"
-
-const char AxisChars[]={'X','Y','Z','E'};
 struct TestCase
 {
-  uint8_t axis;
-  float v,a,xyjerk,zjerk;
+    uint8_t axis;
+    double v;
+    double a;
+    double xyjerk;
+    double zjerk;
 };
 
-class TabVeltest : public QWidget
+class TabVelTest : public QWidget
 {
-Q_OBJECT
+    Q_OBJECT
 
 public:
-  TabVeltest(MainWindow* _mw,QWidget *parent);
+    TabVelTest(MainWindow* _mw, QWidget *parent);
 
-  void calculatePeriodicity();
-  void starttest(uint8_t axis);
-  bool testSetting(uint8_t axis, float v, float a, float xyjerk, float zjerk);
-  void startTestCase(TestCase &tc);
+    void calculatePeriodicity();
+    void starttest(uint8_t axis);
+    bool testSetting(uint8_t axis, double v, double a, double xyjerk, double zjerk);
+    void startTestCase(TestCase &tc);
 
-
- QwtPlotCurve *curveGood,*curveFail ;
- QwtPlot *plot;
-
- 
- QLineEdit *vmax[4],*vmin[4],*vsteps;
- QLineEdit *amax[4],*asteps;
- QPushButton *doTest[3];
- 
- QVector<double> sucess_x,sucess_y;
- QVector<double> fail_x,fail_y;
- 
- MainWindow *mw;
- QList<TestCase> bufferedCases;
-
- 
 public slots:
-  void testX();
-  void testY();
-  void testZ();
-  void checkDone();
+    void testX();
+    void testY();
+    void testZ();
+    void checkDone();
 
-signals:
+private:
+    QwtPlotCurve *curveGood;
+    QwtPlotCurve *curveFail;
+    QwtPlot *plot;
 
-private: 
-  bool testing;
+    QLineEdit *vmax[4];
+    QLineEdit *vmin[4];
+    QLineEdit *vsteps;
+    QLineEdit *amax[4];
+    QLineEdit *asteps;
+    QPushButton *doTest[3];
+
+    QVector<double> sucess_x;
+    QVector<double> sucess_y;
+    QVector<double> fail_x;
+    QVector<double> fail_y;
+
+    MainWindow *mw;
+    QList<TestCase> bufferedCases;
+    bool testing;
 };
 
+#endif

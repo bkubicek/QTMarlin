@@ -1,61 +1,49 @@
-#include <QWidget>
-#include <fstream>
+#ifndef TAB_EEPROM_H
+#define TAB_EEPROM_H
 
-#include <stdint.h>
-#include <QList>
-class MyThread;
-class QwtPlotCurve;
-class QwtPlot;
-class QStatusBar;
-class QCheckBox;
-class QTreeWidget;
-class QTreeWidgetItem;
-class QTabWidget;
+#include <QWidget>
+
 class QPushButton;
 class QLineEdit;
 class QLabel;
 
 class TabEEPROM : public QWidget
 {
-Q_OBJECT
+    Q_OBJECT
 
 public:
-  TabEEPROM(QWidget *parent = 0);
+    TabEEPROM(QWidget *parent = 0);
 
+    QLineEdit *lEstepsPerUnit[4];
+    QLineEdit *lEvmax[4];
+    QLineEdit *lEamax[4];
+    QLineEdit *lEacceleration;
+    QLineEdit *lEaccelerationRetract;
+    QLineEdit *lEvxyJerk;
+    QLineEdit *lEvzJerk;
+    QLineEdit *lEvmin;
+    QLineEdit *lEvminTravel;
+    QLineEdit *lEtminSegment;
+    QLineEdit *lEPIDp;
+    QLineEdit *lEPIDd;
+    QLineEdit *lEPIDi;
 
-//   float stepsperunit[4];
-//   float vmax[4];
-//   float amax[4];
-//   float acceleration, accelerationRetract;
-//   float vxyjerk,vzjerk;
-//   float vmin,vmin_travel;
-//   float tmin_segment;
-  
-  QLineEdit *lEstepsperunit[4];
-  QLineEdit *lEvmax[4];
-  QLineEdit *lEamax[4];
-  QLineEdit *lEacceleration;
-  QLineEdit *lEaccelerationRetract;
-  QLineEdit *lEvxyjerk;
-  QLineEdit *lEvzjerk;
-  QLineEdit *lEvmin;
-  QLineEdit *lEvmin_travel;
-  QLineEdit *lEtmin_segment;
-  QLineEdit *lEPIDp,*lEPIDd,*lEPIDi;
-  
-  QPushButton *pbRead,*pbWrite,*pbStore,*pbReset,*pbFactorReset;
-  
-  QLabel *lbAccDis,*lbAccTime;
-  QLabel *lbAccDis100,*lbAccTime100;
-  QLabel *lbStepRate;
-  void EEPROM_recalculate();
+    QPushButton *pbRead;
+    QPushButton *pbWrite;
+    QPushButton *pbStore;
+    QPushButton *pbReset;
+    QPushButton *pbFactorReset;
+
+    QLabel *lbAccDis;
+    QLabel *lbAccTime;
+    QLabel *lbAccDis100;
+    QLabel *lbAccTime100;
+    QLabel *lbStepRate;
+
+    void EEPROM_recalculate();
+
 public slots:
-  //void setWasRead();
-  //void quit();
-  void changed();
-
-
-private: 
-  QPushButton *test;
+    void changed();
 };
 
+#endif
